@@ -29,7 +29,7 @@
         </form>
       </div>
     </div>
-  </template>
+</template>
   
   <script setup>
     import axios from 'axios';
@@ -54,8 +54,11 @@
           })
           
           if (response.status === 200) {
-            console.log(response.data)
-          } else {
+            localStorage.setItem(config.token, response.data.token); // !
+            localStorage.setItem('nuxt_workshop_user_id', response.data.id); // !
+
+            navigateTo('/home');
+          } else { // ! ต้องดัก else เรื้่องรหัสผิด มันไป catch ล่างเลย 
             Swal.fire({
               icon: 'error',
               title: 'Error',
@@ -65,7 +68,7 @@
         }
       } catch (error) {
         Swal.fire({
-          icon: 'error',
+          icon: 'error', // ! อาจจะต้องปรับการการแสดงผลเมื่อ user กรอก รหัสผิด
           title: 'Error',
           text: error.message,
         })

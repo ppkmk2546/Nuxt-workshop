@@ -58,7 +58,7 @@
             localStorage.setItem('nuxt_workshop_user_id', response.data.id); // !
 
             navigateTo('/home');
-          } else { // ! ต้องดัก else เรื้่องรหัสผิด มันไป catch ล่างเลย 
+          } else { // ! ต้องดัก else เรื่องรหัสผิด มันไป catch ล่างเลย 
             Swal.fire({
               icon: 'error',
               title: 'Error',

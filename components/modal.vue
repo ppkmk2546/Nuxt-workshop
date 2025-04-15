@@ -25,7 +25,7 @@
 
 <template>
     <!--  ? optional เพิ่มตรงกล่อง div นอกสุด z-50 -->
-    <div class="fixed inset-0 flex items-center justify-center bg-gray-300/50 shadow-lg">
+    <div class="fixed inset-0 flex items-center justify-center bg-gray-300/30 shadow-lg">
         <div class="w-full max-w-lg">
             <div class="modal-title p-4 rounded-tl-xl rounded-tr-lx shadow-lg flex justify-between items-center bg-gray-700 text-gray-100">
                 <h2 class="text-lg font-semibold">{{ title }}</h2>

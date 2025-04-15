@@ -107,11 +107,9 @@
     }
 </script>
 
-<template>
-    <div>  
-        <h1 class="text-lg">Product Type</h1>
-    </div>
-    <div class="mt-3">
+<template> 
+    <h1 class="title">Product Type</h1>
+    <div class="p-4 ">
         <button class="btn" @click="showModal = true">
             <i class="fa fa-plus mr-1"></i>
             Add Product Type
@@ -119,9 +117,9 @@
         <table class="table mt-3">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Remark</th>
-                    <th width="110px"></th>
+                    <th class="text-left">Name</th>
+                    <th class="text-left">Remark</th>
+                    <th class="" width="110px"></th>
                 </tr>
             </thead>
             <tbody>

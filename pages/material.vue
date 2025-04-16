@@ -8,7 +8,7 @@
         layout: 'admin',
     });
     
-    // ? อาจจะลืม balance 
+    // 
     const showModal = ref(false);
     const materials = ref([]);
     const id = ref('');
@@ -17,9 +17,44 @@
     const price = ref(0); // ? ค่าเริ่มต้นเป็น 0 ไม่ต้องการให้ มีติด - 
     const remark = ref('');
 
+    // modal stock material
+    const showModalStockMaterial = ref(false);
+    const stockMaterialMaterialId = ref('');
+    const listMaterials = ref([]);
+    const stockMaterialQuantity = ref(0);
+    const stockMaterialPrice = ref(0);
+    const stockMaterialRemark = ref('');
+    const stockMaterialId = ref('');
+
     onMounted(async () => {
         await fecthData();
     });
+
+    const openModalStockMaterial = async () =>  {
+        showModalStockMaterial.value = true;
+
+        try {
+            const res = await axios.get(`${config.apiServer}/api/material/list`);
+            listMaterials.value = res.data.results;
+            stockMaterialMaterialId.value = materials.value[0].id;
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        }
+    }
+
+    const closeModalStockMaterial = () => {
+        // console.log('closeModalStockMaterial ถูกเรียกใช้แล้ว'); !! ไว้ Debug การทำงานของ ฟังก์ชั่น
+        showModalStockMaterial.value = false;
+        // stockMaterialMaterialId.value = '';
+        stockMaterialQuantity.value = 0;
+        stockMaterialPrice.value = 0;
+        stockMaterialRemark.value = '';
+        stockMaterialId.value = '';
+    };
     
     const closeModal = () => {
         showModal.value = false;
@@ -32,18 +67,28 @@
     const fecthData = async () => {
         try {
             const res = await axios.get(`${config.apiServer}/api/material/list`);
+            // * วนหาผลรวมว่าเรารับเข้า stock เท่าไหร่
+            for(const material of res.data.results) {
+                material.balance = 0;
+
+                for(const stockMaterial of material.StockMaterial) {
+                    material.balance += stockMaterial.quantity;
+                }
+
+            }
+
             materials.value = res.data.results;
         } catch (error) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
                 text: error.message,
-            })
+            });
         }
     };
 
     const save = async () => {
-        if(price.value < 0) {
+        if (price.value < 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Warning',
@@ -74,7 +119,7 @@
                 icon: 'error',
                 title: 'Error',
                 text: error.message,
-            })
+            });
         }
     }
 
@@ -97,7 +142,7 @@
                 showCancelButton: true,
                 showConfirmButton: true
             });
-            if(button.isConfirmed){
+            if (button.isConfirmed){
                 await axios.delete(`${config.apiServer}/api/material/remove/${id}`);
                 await fecthData();
             }
@@ -105,9 +150,38 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.message,
-            })
+                text: error.message
+            });
         }
+    }
+
+    const saveStockMaterial = async () => {
+        // console.log('saveStockMaterial ถูกเรียกใช้แล้ว'); !! ไว้ Debug การทำงานของ ฟังก์ชั่น
+        try {
+            const payload = {
+                material_id: stockMaterialMaterialId.value,
+                quantity: stockMaterialQuantity.value,
+                price: stockMaterialPrice.value,
+                remark: stockMaterialRemark.value
+            };
+            await axios.post(`${config.apiServer}/api/stockMaterial/create`, payload);
+            closeModalStockMaterial();
+            fecthData();
+
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        }
+    }
+
+    // Default ราคา 
+    const selectedStockMaterial = () => {
+        const material = listMaterials.value.find(m => m.id === stockMaterialMaterialId.value);
+        stockMaterialPrice.value = material.price;
+        stockMaterialId.value = material.id;
     }
 
 
@@ -150,7 +224,7 @@
             <i class="fa fa-plus mr-1"></i>
             Add Ingredient
         </button>
-        <button class="btn me-2">
+        <button class="btn me-2" @click="openModalStockMaterial">
             <i class="fa fa-arrow-circle-down mr-1"></i>
             Receive into stock
         </button>
@@ -196,16 +270,39 @@
         <h1>Name</h1>
         <input type="text" v-model="name" class="form-control" />
 
-        <h1 class="mt-3">Unit</h1>
+        <h1 class="mt-3 mb-1">Unit</h1>
         <input type="text" v-model="unit" class="form-control" />
 
-        <h1 class="mt-3">Price</h1>
+        <h1 class="mt-3 mb-1">Price</h1>
         <input type="number" v-model="price" class="form-control" min="0" />
 
-        <h1 class="mt-3">Remark</h1>
+        <h1 class="mt-3 mb-1">Remark</h1>
         <input type="text" v-model="remark" class="form-control" />
 
-        <button class="btn btn-primary mt-3" @click="save">
+        <button class="btn btn-primary mt-4 w-full" @click="save">
+            <i class="fa fa-save mr-1"></i>
+            save
+        </button>
+    </Modal>
+
+    <Modal v-if="showModalStockMaterial" title="Receive into stock" @close="closeModalStockMaterial">
+        <h1 class="mb-1">Ingredient</h1>
+        <select v-model="stockMaterialMaterialId" class="form-control" @change="selectedStockMaterial"> <!-- ?  คือการ Default ราคา-->
+            <option v-for="material in materials" :key="material.id" :value="material.id">
+                {{ material.name }}
+            </option>
+        </select>
+
+        <h1 class="mt-4 mb-1">Quantity</h1>
+        <input type="number" v-model="stockMaterialQuantity" class="form-control">
+
+        <h1 class="mt-4 mb-1">Price</h1>
+        <input type="nubmer" v-model="stockMaterialPrice" class="form-control">
+
+        <h1 class="mt-4 mb-1">Remark</h1>
+        <input type="text" v-model="stockMaterialRemark" class="form-control">
+        
+        <button class="btn btn-primary mt-4 w-full" @click="saveStockMaterial">
             <i class="fa fa-save mr-1"></i>
             save
         </button>

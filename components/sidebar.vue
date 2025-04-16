@@ -2,8 +2,35 @@
     import { ref } from 'vue';
     import config from '@/config';
     import Swal from 'sweetalert2';
+    import axios from 'axios';
 
     const activeMenu = ref('');
+    //  * แสดงชื่อคนเข้าระบบ
+    const name = ref(''); 
+    const level = ref('');
+
+    onMounted(async () => {
+        fetchData();
+
+    });
+
+    const fetchData = async () => {
+        try {
+            const headers = {
+                Authorization: `Bearer ${localStorage.getItem(config.token)}`
+            };
+
+            const res = await axios.get(`${config.apiServer}/api/user/info`, { headers });
+            name.value = res.data.result.name;
+            level.value = res.data.result.level;
+        } catch (error) {
+            Swal.fire ({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        }
+    }
 
     const toggleMenu = (menu) => {
         activeMenu.value = menu;
@@ -35,7 +62,7 @@
         <div class="sidebar-title">ERP Whey Protein</div>
         <div class="sidebar-avatar">
             <img src="https://avatar.iran.liara.run/public/48" alt="" class="w-16 h-16 rounded-full mx-auto" />
-            <div class="text-center text-white text-sm mt-3">Admin system</div>
+            <div class="text-center text-white text-sm mt-3">{{ name }} : {{ level }}</div>
             <div class="text-center flex justify-center items-center gap-2 mt-3">
                 <button class="btn btn-primary text-xs" @click="navigateTo('/userProfile')">
                     <i class="fa-solid fa-user mr-1"></i>

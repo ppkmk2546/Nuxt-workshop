@@ -3,6 +3,7 @@
     import Swal from 'sweetalert2';
     import axios from 'axios';
     import config from '@/config';
+    import dayjs from 'dayjs';
 
     definePageMeta({
         layout: 'admin',
@@ -25,6 +26,10 @@
     const stockMaterialPrice = ref(0);
     const stockMaterialRemark = ref('');
     const stockMaterialId = ref('');
+
+    // modal stock material history 
+    const showModalStockMaterialHistory = ref(false);
+    const listStockMaterials = ref ([]);
 
     onMounted(async () => {
         await fecthData();
@@ -184,6 +189,52 @@
         stockMaterialId.value = material.id;
     }
 
+    // HistoryStock
+    const fetchDataStockMaterialHistory = async () => {
+        try {
+            const res = await axios.get(`${config.apiServer}/api/stockMaterial/list`);
+            listStockMaterials.value = res.data.results;
+        } catch (error) {
+            Swal.fire ({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        }
+    }
+
+    const openModalStockMaterialHistory = async () => {
+        showModalStockMaterialHistory.value = true;
+        await fetchDataStockMaterialHistory();
+    }
+
+    const closeModalStockMaterialHistory = () => {
+        showModalStockMaterialHistory.value = false;
+    }
+
+    const removeStockMaterial = async (id) => {
+        try {
+            const button = await Swal.fire({
+                icon: 'warning',
+                title: 'Are you sure ?',
+                text: 'Do you want to delete this Receive into stock?',
+                showCancelButton: true,
+                showConfirmButton: true
+            });
+            if (button.isConfirmed) {
+                await axios.delete(`${config.apiServer}/api/stockMaterial/remove/${id}`);
+                fetchDataStockMaterialHistory();
+                fecthData();
+            }
+
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message
+            });
+        }
+    }
 
     // ? ใช้ทำ mockup จำลองก่อน
     // const materials = ref([
@@ -228,7 +279,7 @@
             <i class="fa fa-arrow-circle-down mr-1"></i>
             Receive into stock
         </button>
-        <button class="btn">
+        <button class="btn" @click="openModalStockMaterialHistory">
             <i class="fa fa-history mr-1"></i>
             Stock history
         </button>
@@ -306,5 +357,39 @@
             <i class="fa fa-save mr-1"></i>
             save
         </button>
+    </Modal>
+
+    <Modal v-if="showModalStockMaterialHistory" title="Stock history" @close="closeModalStockMaterialHistory" size="xl"> <!-- ? เอามาใช้ที่เราทำการ defineprops เป็น size = 'lg'-->
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th width="200px" class="text-left">Ingredient</th>
+                    <th width="100px" class="text-right">Quantity</th>
+                    <th width="100px" class="text-right">Price</th>
+                    <th width="120px" class="text-left">Date</th>
+                    <th width="55px"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="stockMaterial in listStockMaterials" :key="stockMaterial.id">
+                    <td>
+                        <div>{{ stockMaterial.Material.name }}</div>
+                        <div v-if="stockMaterial.remark" class="text-red-500">
+                            {{ stockMaterial.remark }}
+                        </div>
+                    </td>
+                    <td class="text-right">{{ stockMaterial.quantity }}</td>
+                    <td class="text-right">{{ stockMaterial.price.toLocaleString('th-TH') }}</td>
+                    <td>{{ dayjs(stockMaterial.created_at).format('DD/MM/YYYY HH:MM') }}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-danger" @click="removeStockMaterial(stockMaterial.id)">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+
     </Modal>
 </template>
